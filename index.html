@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Defense System - Ultimate Version</title>
+    <title>Defense System - Tactical Edition</title>
     <style>
         /* Блокировка стандартных жестов браузера */
         * {
@@ -42,7 +42,7 @@
             z-index: 10;
         }
 
-        .top-left { display: flex; gap: 8px; align-items: center; }
+        .top-left { display: flex; gap: 12px; align-items: center; }
 
         #lang-btn {
             background: #151515;
@@ -55,13 +55,17 @@
             text-transform: uppercase;
         }
 
+        /* УЛУЧШЕННЫЙ ЗАМЕТНЫЙ СЧЕТЧИК РАКЕТ */
         #top-ammo {
-            font-size: 11px;
-            color: #fff;
-            border: 1px solid #00ff41;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: rgba(0, 255, 65, 0.1);
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffff00;
+            border: 2px solid #ffff00;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: rgba(255, 255, 0, 0.15);
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.4);
+            text-shadow: 0 0 5px #000;
         }
 
         #time-panel { display: flex; gap: 5px; }
@@ -93,6 +97,28 @@
 
         canvas { display: block; width: 100%; height: 100%; border-radius: 12px; }
 
+        /* ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ О РАКЕТАХ */
+        #ammo-popup {
+            position: absolute;
+            top: 40%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff3300;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 0 0 10px #000, 0 0 20px #ff3300;
+            pointer-events: none;
+            display: none;
+            z-index: 50;
+            animation: pulse-warn 0.5s infinite;
+        }
+
+        @keyframes pulse-warn {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
         #warning-indicator {
             position: absolute;
             top: 10px; left: 10px;
@@ -114,23 +140,32 @@
             box-sizing: border-box; flex-shrink: 0;
         }
 
+        /* НОВОЕ РАСПОЛОЖЕНИЕ КНОПОК: ПУСК СЛЕВА, РЕЛОАД СПРАВА */
+        .action-area {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .fire-controls { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 
         #fire-btn {
-            width: 80px; height: 80px;
+            width: 90px; height: 90px;
             background-color: #600; border: 6px solid #300;
             border-radius: 50%; cursor: pointer; outline: none;
-            box-shadow: 0 5px 0 #300;
+            box-shadow: 0 6px 0 #300;
         }
 
         #fire-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #300; }
         #fire-btn:disabled { background-color: #222; border-color: #111; cursor: not-allowed; box-shadow: none; }
 
         #reload-btn {
-            background: #333; border: 1px solid #555;
-            color: #fff; font-size: 11px; padding: 6px 12px;
-            cursor: pointer; border-radius: 3px;
+            background: #444; border: 2px solid #666;
+            color: #fff; font-size: 14px; font-weight: bold;
+            padding: 15px 20px; cursor: pointer; border-radius: 8px;
+            box-shadow: 0 4px 0 #222;
         }
+        #reload-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #222; }
 
         .stats { min-width: 140px; font-weight: bold; }
         .hp-bar-container { width: 100%; height: 10px; background: #300; border: 1px solid #f00; margin-top: 5px; position: relative; }
@@ -166,6 +201,7 @@
 
     <div id="radar-container">
         <div id="warning-indicator">⚠️ INCOMING THREAT ⚠️</div>
+        <div id="ammo-popup">50 ROCKETS LEFT!</div>
         <canvas id="gameCanvas"></canvas>
         <div id="overlay">
             <h1 id="txt-game-over">BASE DESTROYED</h1>
@@ -182,10 +218,12 @@
             <div id="level-display" style="color:#ff0; font-size:12px; margin-top:4px;">WAVE: 1</div>
             <div style="color: #0f0; font-size: 1.1rem;"><span id="txt-score-label">KILLS</span>: <span id="score">0</span></div>
         </div>
-        <div class="fire-controls">
+
+        <div class="action-area">
             <button id="fire-btn"></button>
             <button id="reload-btn">RELOAD</button>
         </div>
+        
         <div id="indicator" style="width:30px; height:30px; background:#222; border-radius:50%; border:2px solid #444;"></div>
     </div>
 
@@ -204,8 +242,8 @@
     })();
 
     const i18n = {
-        ru: { langBtn: "ENG", pause: "ПАУЗА", norm: "НОРМА", rockets: "РАКЕТЫ", hpLabel: "ПРОЧНОСТЬ БАЗЫ:", ammoLabel: "БОЕЗАПАС", period: "ВОЛНА", scoreLabel: "СБИТО", gameOver: "БАЗА УНИЧТОЖЕНА", finalScore: "СЧЕТ", restart: "ПЕРЕЗАПУСК", reloading: "ПЕРЕЗАРЯДКА...", threat: "⚠️ УГРОЗА ⚠️" },
-        en: { langBtn: "RUS", pause: "PAUSE", norm: "NORMAL", rockets: "ROCKETS", hpLabel: "BASE INTEGRITY:", ammoLabel: "AMMO", period: "WAVE", scoreLabel: "KILLS", gameOver: "BASE DESTROYED", finalScore: "SCORE", restart: "RESTART", reloading: "RELOADING...", threat: "⚠️ INCOMING THREAT ⚠️" }
+        ru: { langBtn: "ENG", pause: "ПАУЗА", norm: "НОРМА", rockets: "РАКЕТЫ", hpLabel: "ПРОЧНОСТЬ БАЗЫ:", ammoLabel: "БОЕЗАПАС", period: "ВОЛНА", scoreLabel: "СБИТО", gameOver: "БАЗА УНИЧТОЖЕНА", finalScore: "СЧЕТ", restart: "ПЕРЕЗАПУСК", reloading: "ПЕРЕЗАРЯДКА...", threat: "⚠️ УГРОЗА ⚠️", left: "ОСТАЛОСЬ" },
+        en: { langBtn: "RUS", pause: "PAUSE", norm: "NORMAL", rockets: "ROCKETS", hpLabel: "BASE INTEGRITY:", ammoLabel: "AMMO", period: "WAVE", scoreLabel: "KILLS", gameOver: "BASE DESTROYED", finalScore: "SCORE", restart: "RESTART", reloading: "RELOADING...", threat: "⚠️ INCOMING THREAT ⚠️", left: "ROCKETS LEFT" }
     };
 
     let currentLang = 'en';
@@ -238,6 +276,7 @@
     const reloadBtn = document.getElementById('reload-btn');
     const ammoCountEl = document.getElementById('ammo-count');
     const ammoTopEl = document.getElementById('ammo-val-top');
+    const ammoPopupEl = document.getElementById('ammo-popup');
     const warningEl = document.getElementById('warning-indicator');
     const scoreEl = document.getElementById('score');
     const levelEl = document.getElementById('level-display');
@@ -246,13 +285,11 @@
     const finalScoreEl = document.getElementById('final-score');
     const indicator = document.getElementById('indicator');
 
-    // Настройки геймплея
     let score = 0, level = 1, enemies = [], missiles = [], particles = [];
     let baseHp = 100, maxHp = 100, timeScale = 0.8, gameActive = true, currentAmmo = 100;
     let isReloading = false, reloadProgress = 0, spawnCounter = 0;
     
-    // ПАРАМЕТРЫ РЕГЕНЕРАЦИИ (Добавлено)
-    const regenPower = 0.035; // Сила восстановления здоровья в секунду (умножается на timeScale)
+    const regenPower = 0.035;
 
     function triggerVibration(pattern) { if ("vibrate" in navigator) navigator.vibrate(pattern); }
 
@@ -370,21 +407,14 @@
         }
     }
 
-    /* КЛАСС МЕХАНИКИ ОБЪЕКТОВ (ВРАГИ И ПВО) */
     class Missile {
         constructor(x, y, type = 'normal') {
             this.id = Math.random(); this.x = x; this.y = y; this.type = type;
             this.isEnemy = (type !== 'pvo'); this.active = true; this.isDowned = false;
             this.hp = 1; this.damage = 10; this.baseSpeed = 1.5; this.turnRate = 0.04; this.color = '#f00';
-            
-            this.totalRotation = 0;
-            this.isReacquiring = false;
-            this.reacquireTimer = 0;
-
-            this.isKamikaze = Math.random() < 0.7;
-            this.flightState = 'approach'; 
-            this.hasReleasedPayload = false;
-            this.retreatSide = Math.random() > 0.5 ? 1 : -1;
+            this.totalRotation = 0; this.isReacquiring = false; this.reacquireTimer = 0;
+            this.isKamikaze = Math.random() < 0.7; this.flightState = 'approach'; 
+            this.hasReleasedPayload = false; this.retreatSide = Math.random() > 0.5 ? 1 : -1;
 
             if(type === 'swift') { this.baseSpeed = 3.8; this.color = '#0ff'; }
             if(type === 'heavy') { this.baseSpeed = 0.8; this.color = '#f0f'; this.hp = 2; this.damage = 20; }
@@ -403,7 +433,6 @@
 
         update() {
             if (timeScale === 0 || !gameActive) return;
-            
             if (this.isDowned) {
                 this.vy += 0.04 * timeScale; this.x += this.vx * timeScale; this.y += this.vy * timeScale;
                 this.angle += this.rot * timeScale;
@@ -411,11 +440,9 @@
                 if (this.y >= canvas.height - 5) this.explode(true);
                 return;
             }
-
             if (this.type === 'jet' || this.type === 'helicopter') {
-                if (this.isKamikaze) {
-                    this.y += this.speed * timeScale;
-                } else {
+                if (this.isKamikaze) { this.y += this.speed * timeScale; } 
+                else {
                     if (this.flightState === 'approach') {
                         this.y += this.speed * timeScale;
                         let releasePoint = (this.type === 'jet') ? canvas.height * 0.28 : canvas.height * 0.45;
@@ -440,8 +467,7 @@
                         if (this.y < -200 || this.x < -200 || this.x > canvas.width + 200) this.active = false;
                     }
                 }
-            } 
-            else if (this.isEnemy) {
+            } else if (this.isEnemy) {
                 if (this.type === 'enemy_missile' || this.type === 'enemy_bomb' || this.type === 'normal') {
                     this.y += this.speed * timeScale;
                 } else {
@@ -455,16 +481,13 @@
                     this.x += Math.cos(this.angle) * this.speed * timeScale;
                     this.y += Math.sin(this.angle) * this.speed * timeScale;
                 }
-            } 
-            else {
-                // ЛОГИКА ПВО (ПОИСК ЦЕЛИ)
+            } else {
                 if (!this.target || !this.target.active || this.target.isDowned) {
                     const targetedIds = missiles.filter(m => m.active && m.target).map(m => m.target.id);
                     this.target = enemies.find(e => e.active && !e.isDowned && !targetedIds.includes(e.id)) || 
                                   enemies.find(e => e.active && !e.isDowned);
                     this.totalRotation = 0;
                 }
-
                 if (this.target) {
                     if (this.isReacquiring) {
                         this.reacquireTimer -= timeScale;
@@ -482,14 +505,11 @@
                 }
                 this.x += Math.cos(this.angle) * this.speed * timeScale;
                 this.y += Math.sin(this.angle) * this.speed * timeScale;
-
                 if (this.target && Math.hypot(this.target.x-this.x, this.target.y-this.y) < 15) {
                     this.active = false; this.target.hit(); triggerVibration([30, 20, 30]);
                 }
             }
-
             if (this.isEnemy && this.y > canvas.height - 10) { takeDamage(this.damage); this.explode(false); }
-
             if (timeScale > 0) {
                 particles.push(new SmokeParticle(this.x, this.y));
                 if (Math.random() > 0.6) particles.push(new Particle(this.x, this.y, this.color, 0.3, 1.2));
@@ -532,7 +552,6 @@
         }
     }
 
-    /* ОСНОВНЫЕ ФУНКЦИИ ИГРЫ */
     function takeDamage(val) {
         baseHp = Math.max(0, baseHp - val); hpFill.style.width = baseHp + "%";
         canvas.classList.add('alarm-blink'); triggerVibration(100);
@@ -551,9 +570,19 @@
         isReloading = true; reloadProgress = 0; fireBtn.disabled = true;
     }
 
+    /* ОБНОВЛЕННАЯ ФУНКЦИЯ AMMO UI С УВЕДОМЛЕНИЯМИ */
     function updateAmmoUI() {
         ammoCountEl.innerText = currentAmmo;
         ammoTopEl.innerText = currentAmmo;
+
+        // Логика уведомлений 50, 25, 10
+        if (currentAmmo === 50 || currentAmmo === 25 || currentAmmo === 10) {
+            const t = i18n[currentLang];
+            ammoPopupEl.innerText = `${currentAmmo} ${t.left}`;
+            ammoPopupEl.style.display = 'block';
+            setTimeout(() => { ammoPopupEl.style.display = 'none'; }, 2000);
+            triggerVibration([100, 50, 100]);
+        }
     }
 
     function drawGrid() {
@@ -567,29 +596,19 @@
         ctx.fillStyle = '#000b00'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         drawGrid();
 
-        // ЛОГИКА РЕГЕНЕРАЦИИ (Добавлено)
         if (baseHp < maxHp && baseHp > 0) {
             baseHp = Math.min(maxHp, baseHp + (regenPower * timeScale));
             hpFill.style.width = baseHp + "%";
         }
 
-        // ЛОГИКА ПЕРЕЗАРЯДКИ (Настроено на 8.5 сек)
         if (isReloading) {
-            reloadProgress += (16.6 * timeScale * 1.0); // Коэффициент скорости прогресса
+            reloadProgress += (16.6 * timeScale);
             ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(canvas.width/2 - 70, canvas.height/2 - 25, 140, 50);
             ctx.fillStyle = "#fff"; ctx.font = "12px monospace"; ctx.textAlign = "center";
             ctx.fillText(i18n[currentLang].reloading, canvas.width/2, canvas.height/2 - 5);
             ctx.fillStyle = "#222"; ctx.fillRect(canvas.width/2 - 50, canvas.height/2 + 5, 100, 10);
-            
-            // Отрисовка шкалы исходя из порога в 8500 мс
             ctx.fillStyle = "#0f0"; ctx.fillRect(canvas.width/2 - 50, canvas.height/2 + 5, (reloadProgress / 8500) * 100, 10);
-            
-            if (reloadProgress >= 8500) { 
-                currentAmmo = 100; 
-                updateAmmoUI(); 
-                isReloading = false; 
-                fireBtn.disabled = false; 
-            }
+            if (reloadProgress >= 8500) { currentAmmo = 100; updateAmmoUI(); isReloading = false; fireBtn.disabled = false; }
         }
 
         particles = particles.filter(p => { p.update(); p.draw(); return p.life > 0; });
@@ -627,7 +646,6 @@
 
     reloadBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startReload(); }, { passive: false });
     
-    // Инициализация
     updateLanguageUI();
     gameLoop();
 </script>
