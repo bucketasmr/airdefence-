@@ -289,7 +289,6 @@
     let baseHp = 100, maxHp = 100, timeScale = 0.8, gameActive = true, currentAmmo = 100;
     let isReloading = false, reloadProgress = 0, spawnCounter = 0;
     
-    const maxReloadTime = 8500; // Константа времени перезарядки
     const regenPower = 0.035;
 
     function triggerVibration(pattern) { if ("vibrate" in navigator) navigator.vibrate(pattern); }
@@ -566,33 +565,17 @@
         triggerVibration([200, 100, 200]);
     }
 
-    // НОВАЯ ЛОГИКА ПЕРЕЗАРЯДКИ И ОТМЕНЫ
     function startReload() {
-        if (isReloading) {
-            cancelReload(); // Если уже идет — отменяем
-            return;
-        }
-        if (currentAmmo === 100) return;
+        if (isReloading || currentAmmo === 100) return;
         isReloading = true; reloadProgress = 0; fireBtn.disabled = true;
     }
 
-    function cancelReload() {
-        if (!isReloading) return;
-        // Считаем сколько успело добавиться (от 0 до 100)
-        let addedAmmo = Math.floor((reloadProgress / maxReloadTime) * 100);
-        currentAmmo = Math.min(100, currentAmmo + addedAmmo);
-        
-        isReloading = false;
-        reloadProgress = 0;
-        fireBtn.disabled = false;
-        updateAmmoUI();
-        triggerVibration([50, 30]);
-    }
-
+    /* ОБНОВЛЕННАЯ ФУНКЦИЯ AMMO UI С УВЕДОМЛЕНИЯМИ */
     function updateAmmoUI() {
         ammoCountEl.innerText = currentAmmo;
         ammoTopEl.innerText = currentAmmo;
 
+        // Логика уведомлений 50, 25, 10
         if (currentAmmo === 50 || currentAmmo === 25 || currentAmmo === 10) {
             const t = i18n[currentLang];
             ammoPopupEl.innerText = `${currentAmmo} ${t.left}`;
@@ -624,8 +607,8 @@
             ctx.fillStyle = "#fff"; ctx.font = "12px monospace"; ctx.textAlign = "center";
             ctx.fillText(i18n[currentLang].reloading, canvas.width/2, canvas.height/2 - 5);
             ctx.fillStyle = "#222"; ctx.fillRect(canvas.width/2 - 50, canvas.height/2 + 5, 100, 10);
-            ctx.fillStyle = "#0f0"; ctx.fillRect(canvas.width/2 - 50, canvas.height/2 + 5, (reloadProgress / maxReloadTime) * 100, 10);
-            if (reloadProgress >= maxReloadTime) { currentAmmo = 100; updateAmmoUI(); isReloading = false; fireBtn.disabled = false; }
+            ctx.fillStyle = "#0f0"; ctx.fillRect(canvas.width/2 - 50, canvas.height/2 + 5, (reloadProgress / 8500) * 100, 10);
+            if (reloadProgress >= 8500) { currentAmmo = 100; updateAmmoUI(); isReloading = false; fireBtn.disabled = false; }
         }
 
         particles = particles.filter(p => { p.update(); p.draw(); return p.life > 0; });
